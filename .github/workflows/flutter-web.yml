@@ -27,7 +27,7 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build web --release --base-href "/Smart-Kitchen-Inventory-Hub/"
+      - run: flutter build web --release --base-href "/Stock-Sense/"
 
       - uses: actions/upload-pages-artifact@v3
         with:

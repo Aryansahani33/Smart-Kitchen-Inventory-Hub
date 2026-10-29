@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 
 void main() {
-  runApp(const SmartKitchenApp());
+  runApp(const StockSenseApp());
 }
 
-class SmartKitchenApp extends StatelessWidget {
-  const SmartKitchenApp({super.key});
+class StockSenseApp extends StatelessWidget {
+  const StockSenseApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Smart Kitchen Inventory Hub',
+      title: 'Stock Sense',
       debugShowCheckedModeBanner: false,
 
       theme: ThemeData(
