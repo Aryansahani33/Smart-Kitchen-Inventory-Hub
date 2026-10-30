@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../data/inventory_data.dart';
+import '../widgets/stat_card.dart';
+import '../widgets/quick_action_card.dart';
 import 'add_item_screen.dart';
+import 'analytics_screen.dart';
+import 'home_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -10,15 +15,12 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-
   List<Map<String, dynamic>> get inventory => InventoryData.items;
 
   Future<void> openAddItem() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AddItemScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const AddItemScreen()),
     );
 
     setState(() {});
@@ -26,181 +28,235 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     int lowStock = inventory
         .where((item) => item["quantity"].toString().contains("0"))
         .length;
 
     return Scaffold(
+      backgroundColor: const Color(0xffF5F7FA),
+
       appBar: AppBar(
-        title: const Text("Smart Kitchen"),
+        title: const Text(
+          "Stock Sense",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 15),
+            child: Icon(Icons.notifications_none),
+          ),
+        ],
+      ),
+
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: openAddItem,
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text("Add Inventory"),
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             const Text(
               "Welcome 👋",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 5),
+
+            const Text(
+              "AI & IoT Inventory Monitoring",
+              style: TextStyle(color: Colors.grey),
+            ),
+
+            const SizedBox(height: 25),
 
             Row(
               children: [
-
                 Expanded(
-                  child: dashboardCard(
-                    "Total Items",
-                    inventory.length.toString(),
-                    Icons.inventory,
-                    Colors.green,
+                  child: StatCard(
+                    title: "Items",
+                    value: inventory.length.toString(),
+                    icon: Icons.inventory_2,
+                    color: Colors.green,
                   ),
                 ),
 
                 const SizedBox(width: 12),
 
                 Expanded(
-                  child: dashboardCard(
-                    "Low Stock",
-                    lowStock.toString(),
-                    Icons.warning,
-                    Colors.red,
+                  child: StatCard(
+                    title: "Low Stock",
+                    value: lowStock.toString(),
+                    icon: Icons.warning,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            const Row(
+              children: [
+                Expanded(
+                  child: StatCard(
+                    title: "Device",
+                    value: "Online",
+                    icon: Icons.wifi,
+                    color: Colors.blue,
                   ),
                 ),
 
+                SizedBox(width: 12),
+
+                Expanded(
+                  child: StatCard(
+                    title: "Inventory Value",
+                    value: "₹84.5K",
+                    icon: Icons.currency_rupee,
+                    color: Colors.orange,
+                  ),
+                ),
               ],
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
+              "Quick Actions",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 15),
+
+            Row(
+              children: [
+                QuickActionCard(
+                  icon: Icons.add_box,
+                  title: "Add",
+                  color: Colors.green,
+                  onTap: openAddItem,
+                ),
+
+                const SizedBox(width: 12),
+
+                QuickActionCard(
+                  icon: Icons.analytics,
+                  title: "Analytics",
+                  color: Colors.deepPurple,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AnalyticsScreen(),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(width: 12),
+
+                QuickActionCard(
+                  icon: Icons.inventory,
+                  title: "Inventory",
+                  color: Colors.orange,
+                  onTap: () {},
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
+              "Recent Alerts",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 15),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.red,
+                  child: Icon(Icons.warning_amber_rounded, color: Colors.white),
+                ),
+                title: Text(
+                  "Low Stock Alert",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text("Some inventory items require restocking."),
+                trailing: Icon(Icons.arrow_forward_ios, size: 18),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.green,
+                  child: Icon(Icons.memory, color: Colors.white),
+                ),
+                title: Text(
+                  "IoT Device Status",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text("ESP32 Connected • Ready for Live Monitoring"),
+                trailing: Icon(Icons.check_circle, color: Colors.green),
+              ),
             ),
 
             const SizedBox(height: 25),
 
-            const Text(
-              "Inventory",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+            Card(
+              color: Colors.green.shade50,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
               ),
-            ),
-
-            const SizedBox(height: 10),
-
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: inventory.length,
-
-              itemBuilder: (context, index) {
-
-                final item = inventory[index];
-
-                return Card(
-                  child: ListTile(
-
-                    leading: Icon(
-                      item["icon"],
-                      color: Colors.green,
+              child: const Padding(
+                padding: EdgeInsets.all(18),
+                child: Column(
+                  children: [
+                    Icon(Icons.insights, size: 55, color: Colors.green),
+                    SizedBox(height: 12),
+                    Text(
+                      "Stock Sense",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-
-                    title: Text(item["name"]),
-
-                    subtitle: const Text("Available"),
-
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-
-                        Text(
-                          item["quantity"],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete,
-                            color: Colors.red,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              InventoryData.items.removeAt(index);
-                            });
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Item Deleted"),
-                              ),
-                            );
-                          },
-                        ),
-
-                      ],
+                    SizedBox(height: 8),
+                    Text(
+                      "AI & IoT Based Smart Inventory Management System",
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: openAddItem,
-                icon: const Icon(Icons.add),
-                label: const Text("Add Item"),
+                    SizedBox(height: 15),
+                    Divider(),
+                    SizedBox(height: 10),
+                    Text(
+                      "Real-time stock monitoring for Restaurants, Hospitals, Warehouses and Retail Stores.",
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
 
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget dashboardCard(
-      String title,
-      String value,
-      IconData icon,
-      Color color,
-      ) {
-
-    return Card(
-      elevation: 5,
-
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-
-        child: Column(
-          children: [
-
-            Icon(
-              icon,
-              color: color,
-              size: 40,
-            ),
-
-            const SizedBox(height: 10),
-
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            Text(title),
-
+            const SizedBox(height: 90),
           ],
         ),
       ),
