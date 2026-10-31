@@ -1,11 +1,14 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../data/inventory_data.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/quick_action_card.dart';
 import 'add_item_screen.dart';
 import 'analytics_screen.dart';
-import 'home_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,6 +20,25 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   List<Map<String, dynamic>> get inventory => InventoryData.items;
 
+  double currentWeight = 0.0;
+  Timer? timer;
+
+  Future<void> fetchWeight() async {
+    try {
+      final response = await http.get(Uri.parse("http://192.168.0.105/weight"));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          currentWeight = (data["weight"] as num).toDouble();
+        });
+      }
+    } catch (e) {
+      debugPrint("Error: $e");
+    }
+  }
+
   Future<void> openAddItem() async {
     await Navigator.push(
       context,
@@ -27,6 +49,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    fetchWeight();
+
+    timer = Timer.periodic(const Duration(seconds: 1), (_) => fetchWeight());
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     int lowStock = inventory
         .where((item) => item["quantity"].toString().contains("0"))
@@ -34,7 +71,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xffF5F7FA),
-
       appBar: AppBar(
         title: const Text(
           "Stock Sense",
@@ -47,7 +83,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-
       floatingActionButton: FloatingActionButton.extended(
         onPressed: openAddItem,
         backgroundColor: Colors.green,
@@ -55,10 +90,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         icon: const Icon(Icons.add),
         label: const Text("Add Inventory"),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(18),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -86,9 +119,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.green,
                   ),
                 ),
-
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: StatCard(
                     title: "Low Stock",
@@ -112,9 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.blue,
                   ),
                 ),
-
                 SizedBox(width: 12),
-
                 Expanded(
                   child: StatCard(
                     title: "Inventory Value",
@@ -124,6 +153,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 25),
+
+            Card(
+              color: Colors.green.shade50,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    const Icon(Icons.scale, size: 55, color: Colors.green),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Live Weight",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      "${currentWeight.toStringAsFixed(2)} g",
+                      style: const TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 30),
@@ -143,9 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: Colors.green,
                   onTap: openAddItem,
                 ),
-
                 const SizedBox(width: 12),
-
                 QuickActionCard(
                   icon: Icons.analytics,
                   title: "Analytics",
@@ -159,9 +220,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   },
                 ),
-
                 const SizedBox(width: 12),
-
                 QuickActionCard(
                   icon: Icons.inventory,
                   title: "Inventory",
@@ -179,6 +238,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
 
             const SizedBox(height: 15),
+
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(

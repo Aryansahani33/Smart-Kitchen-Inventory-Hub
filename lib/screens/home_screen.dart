@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'dashboard_screen.dart';
 import 'inventory_screen.dart';
 import 'alerts_screen.dart';
@@ -12,20 +13,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   int selectedIndex = 0;
 
-  final List<Widget> pages = [
-    const DashboardScreen(),
-    const InventoryScreen(),
-    const AlertsScreen(),
-    const SettingsScreen(),
-  ];
+  late final List<Widget> pages;
+
+  @override
+  void initState() {
+    super.initState();
+
+    pages = const [
+      DashboardScreen(),
+      InventoryScreen(),
+      AlertsScreen(),
+      SettingsScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: pages[selectedIndex],
+      body: IndexedStack(index: selectedIndex, children: pages),
 
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
@@ -36,27 +43,13 @@ class _HomeScreenState extends State<HomeScreen> {
         },
 
         destinations: const [
-
-          NavigationDestination(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-
+          NavigationDestination(icon: Icon(Icons.home), label: "Home"),
           NavigationDestination(
             icon: Icon(Icons.inventory),
-            label: "Inventory",
+            label: "Container",
           ),
-
-          NavigationDestination(
-            icon: Icon(Icons.warning),
-            label: "Alerts",
-          ),
-
-          NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: "Settings",
-          ),
-
+          NavigationDestination(icon: Icon(Icons.warning), label: "Alerts"),
+          NavigationDestination(icon: Icon(Icons.settings), label: "Settings"),
         ],
       ),
     );

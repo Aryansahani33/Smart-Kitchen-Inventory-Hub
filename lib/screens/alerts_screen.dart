@@ -1,58 +1,105 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-import '../data/inventory_data.dart';
-
-class AlertsScreen extends StatelessWidget {
+class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
 
-  Color getStatusColor(String quantity) {
-    if (quantity.contains("0")) {
-      return Colors.red;
-    } else if (quantity.contains("1") || quantity.contains("2")) {
-      return Colors.orange;
-    }
-    return Colors.green;
+  @override
+  State<AlertsScreen> createState() => _AlertsScreenState();
+}
+
+class _AlertsScreenState extends State<AlertsScreen> {
+  double currentWeight = 0.0;
+  Timer? timer;
+
+  Future<void> fetchWeight() async {
+    try {
+      final response = await http.get(Uri.parse("http://192.168.0.105/weight"));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          currentWeight = (data["weight"] as num).toDouble();
+        });
+      }
+    } catch (_) {}
   }
 
-  String getStatus(String quantity) {
-    if (quantity.contains("0")) {
-      return "Critical";
-    } else if (quantity.contains("1") || quantity.contains("2")) {
-      return "Low Stock";
+  @override
+  void initState() {
+    super.initState();
+
+    fetchWeight();
+
+    timer = Timer.periodic(const Duration(seconds: 1), (_) => fetchWeight());
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  String getAlert() {
+    if (currentWeight < 100) {
+      return "Low Container Level";
+    } else if (currentWeight < 500) {
+      return "Container Half Full";
+    } else {
+      return "Container Full";
     }
-    return "Sufficient";
+  }
+
+  Color getColor() {
+    if (currentWeight < 100) {
+      return Colors.red;
+    } else if (currentWeight < 500) {
+      return Colors.orange;
+    } else {
+      return Colors.green;
+    }
+  }
+
+  String getMessage() {
+    if (currentWeight < 100) {
+      return "Container weight is below the minimum threshold. Refill recommended.";
+    } else if (currentWeight < 500) {
+      return "Container is partially filled.";
+    } else {
+      return "Container level is normal.";
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = InventoryData.items;
+    final color = getColor();
 
     return Scaffold(
       backgroundColor: const Color(0xffF5F7FA),
-
       appBar: AppBar(
         title: const Text(
-          "Stock Alerts",
+          "Container Alerts",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(18),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Inventory Alerts",
+              "Smart Container Status",
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 8),
 
             const Text(
-              "Monitor critical stock levels in real time",
+              "Real-time monitoring using ESP32 & Load Cell",
               style: TextStyle(color: Colors.grey),
             ),
 
@@ -77,126 +124,50 @@ class AlertsScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 20),
 
-            const Text(
-              "Current Stock Alerts",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 15),
-
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: items.length,
-
-              itemBuilder: (context, index) {
-                final item = items[index];
-
-                final color = getStatusColor(item["quantity"]);
-
-                final status = getStatus(item["quantity"]);
-
-                return Card(
-                  elevation: 4,
-                  margin: const EdgeInsets.only(bottom: 15),
-
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-
-                  child: Padding(
-                    padding: const EdgeInsets.all(18),
-
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-
-                      children: [
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: color.withOpacity(0.15),
-                              child: Icon(item["icon"], color: color),
-                            ),
-
-                            const SizedBox(width: 15),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item["name"],
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 5),
-
-                                  Text(
-                                    "Current Stock : ${item["quantity"]}",
-                                    style: const TextStyle(color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                status,
-                                style: TextStyle(
-                                  color: color,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 15),
-
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.lightbulb_outline, color: color),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  status == "Critical"
-                                      ? "Immediate restocking required to avoid stock-out."
-                                      : status == "Low Stock"
-                                      ? "Plan a refill soon to maintain inventory."
-                                      : "Stock level is healthy. No action required.",
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+            Card(
+              elevation: 5,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 35,
+                      backgroundColor: color.withOpacity(0.15),
+                      child: Icon(Icons.inventory_2, size: 40, color: color),
                     ),
-                  ),
-                );
-              },
+
+                    const SizedBox(height: 15),
+
+                    Text(
+                      getAlert(),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Text(
+                      "Current Weight: ${currentWeight.toStringAsFixed(2)} g",
+                      style: const TextStyle(fontSize: 18),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    Text(getMessage(), textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
             Card(
               color: Colors.green.shade50,
@@ -206,22 +177,18 @@ class AlertsScreen extends StatelessWidget {
               child: const Padding(
                 padding: EdgeInsets.all(18),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, color: Colors.green),
+                    Icon(Icons.info, color: Colors.green),
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        "In the final IoT version, alerts will be generated automatically based on live weight data received from the ESP32 and load cell.",
-                        style: TextStyle(fontSize: 15),
+                        "Alerts are generated automatically from the live weight received from the ESP32 and Load Cell.",
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-
-            const SizedBox(height: 20),
           ],
         ),
       ),

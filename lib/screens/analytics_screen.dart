@@ -1,15 +1,55 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-import '../data/inventory_data.dart';
-
-class AnalyticsScreen extends StatelessWidget {
+class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
 
-  int get totalItems => InventoryData.items.length;
+  @override
+  State<AnalyticsScreen> createState() => _AnalyticsScreenState();
+}
 
-  int get lowStock => InventoryData.items
-      .where((item) => item["quantity"].toString().contains("0"))
-      .length;
+class _AnalyticsScreenState extends State<AnalyticsScreen> {
+  double currentWeight = 0.0;
+  Timer? timer;
+
+  Future<void> fetchWeight() async {
+    try {
+      final response = await http.get(Uri.parse("http://192.168.0.105/weight"));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          currentWeight = (data["weight"] as num).toDouble();
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    fetchWeight();
+
+    timer = Timer.periodic(const Duration(seconds: 1), (_) => fetchWeight());
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  double get fillPercent {
+    double value = currentWeight / 1000;
+    if (value > 1) value = 1;
+    if (value < 0) value = 0;
+    return value;
+  }
 
   Widget analyticsCard(String title, String value, IconData icon, Color color) {
     return Expanded(
@@ -23,21 +63,17 @@ class AnalyticsScreen extends StatelessWidget {
               CircleAvatar(
                 radius: 26,
                 backgroundColor: color.withOpacity(0.15),
-                child: Icon(icon, color: color, size: 28),
+                child: Icon(icon, color: color),
               ),
-
               const SizedBox(height: 15),
-
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 5),
-
               Text(
                 title,
                 textAlign: TextAlign.center,
@@ -52,14 +88,14 @@ class AnalyticsScreen extends StatelessWidget {
 
   Widget progressTile(String title, double value, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
               Text("${(value * 100).toInt()}%"),
             ],
           ),
@@ -77,6 +113,16 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
+  String recommendation() {
+    if (currentWeight < 100) {
+      return "Container level is low. Refill recommended.";
+    } else if (currentWeight < 500) {
+      return "Container is partially filled.";
+    } else {
+      return "Container level is healthy.";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,7 +133,6 @@ class AnalyticsScreen extends StatelessWidget {
           "Analytics",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
       ),
 
       body: SingleChildScrollView(
@@ -95,17 +140,16 @@ class AnalyticsScreen extends StatelessWidget {
 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-
           children: [
             const Text(
-              "Inventory Overview",
+              "Container Analytics",
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 8),
 
             const Text(
-              "Real-time business insights",
+              "Live IoT Monitoring Dashboard",
               style: TextStyle(color: Colors.grey),
             ),
 
@@ -114,20 +158,15 @@ class AnalyticsScreen extends StatelessWidget {
             Row(
               children: [
                 analyticsCard(
-                  "Total Items",
-                  totalItems.toString(),
-                  Icons.inventory_2,
+                  "Current Weight",
+                  "${currentWeight.toStringAsFixed(1)} g",
+                  Icons.scale,
                   Colors.green,
                 ),
 
                 const SizedBox(width: 12),
 
-                analyticsCard(
-                  "Low Stock",
-                  lowStock.toString(),
-                  Icons.warning,
-                  Colors.red,
-                ),
+                analyticsCard("ESP32", "Online", Icons.wifi, Colors.blue),
               ],
             ),
 
@@ -135,15 +174,15 @@ class AnalyticsScreen extends StatelessWidget {
 
             Row(
               children: [
-                analyticsCard("IoT Device", "Online", Icons.wifi, Colors.blue),
+                analyticsCard("WiFi", "Connected", Icons.router, Colors.orange),
 
                 const SizedBox(width: 12),
 
                 analyticsCard(
-                  "Inventory",
-                  "₹84.5K",
-                  Icons.currency_rupee,
-                  Colors.orange,
+                  "Container",
+                  "Active",
+                  Icons.inventory_2,
+                  Colors.purple,
                 ),
               ],
             ),
@@ -151,25 +190,19 @@ class AnalyticsScreen extends StatelessWidget {
             const SizedBox(height: 30),
 
             const Text(
-              "Inventory Health",
+              "Container Fill Level",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 18),
-            progressTile("Inventory Health", 0.90, Colors.green),
 
-            progressTile("IoT Connectivity", 1.00, Colors.blue),
+            progressTile("Current Fill", fillPercent, Colors.green),
 
-            progressTile("Stock Availability", 0.82, Colors.orange),
+            progressTile("Device Connectivity", 1.0, Colors.blue),
+
+            progressTile("System Health", 1.0, Colors.orange),
 
             const SizedBox(height: 25),
-
-            const Text(
-              "System Status",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 15),
 
             Card(
               elevation: 4,
@@ -179,7 +212,7 @@ class AnalyticsScreen extends StatelessWidget {
               child: const ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.green,
-                  child: Icon(Icons.router, color: Colors.white),
+                  child: Icon(Icons.memory, color: Colors.white),
                 ),
                 title: Text(
                   "ESP32 Device",
@@ -197,24 +230,24 @@ class AnalyticsScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: const ListTile(
-                leading: CircleAvatar(
+              child: ListTile(
+                leading: const CircleAvatar(
                   backgroundColor: Colors.blue,
                   child: Icon(Icons.sync, color: Colors.white),
                 ),
-                title: Text(
-                  "Last Synchronization",
+                title: const Text(
+                  "Last Updated",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text("Just now"),
-                trailing: Icon(Icons.cloud_done, color: Colors.blue),
+                subtitle: Text(TimeOfDay.now().format(context)),
+                trailing: const Icon(Icons.cloud_done, color: Colors.blue),
               ),
             ),
 
             const SizedBox(height: 30),
 
             const Text(
-              "AI Recommendations",
+              "System Recommendation",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
@@ -225,17 +258,17 @@ class AnalyticsScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: const Padding(
-                padding: EdgeInsets.all(18),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.lightbulb, color: Colors.green),
-                    SizedBox(width: 12),
+                    const Icon(Icons.lightbulb, color: Colors.green),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        "Based on current inventory trends, consider restocking low-stock items before they reach critical levels. Future versions will use IoT data to generate automatic recommendations.",
-                        style: TextStyle(fontSize: 15),
+                        recommendation(),
+                        style: const TextStyle(fontSize: 15),
                       ),
                     ),
                   ],
@@ -243,7 +276,7 @@ class AnalyticsScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 30),
           ],
         ),
       ),

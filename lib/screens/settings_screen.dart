@@ -45,7 +45,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           "Settings",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
       ),
 
       body: SingleChildScrollView(
@@ -55,30 +54,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Application Settings",
+              "System Settings",
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 8),
 
             const Text(
-              "Stock Sense Configuration",
+              "Smart Container Configuration",
               style: TextStyle(color: Colors.grey),
             ),
 
             const SizedBox(height: 25),
 
             settingTile(
-              icon: Icons.business,
-              title: "Organization",
-              subtitle: "Restaurant / Hospital / Warehouse",
-              color: Colors.blue,
-            ),
-
-            settingTile(
-              icon: Icons.person,
-              title: "Developer",
-              subtitle: "Aryan & Harsh",
+              icon: Icons.inventory_2,
+              title: "Container Name",
+              subtitle: "Kitchen Storage Container",
               color: Colors.green,
             ),
 
@@ -97,10 +89,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
 
             settingTile(
+              icon: Icons.scale,
+              title: "Sensor",
+              subtitle: "HX711 + Load Cell",
+              color: Colors.orange,
+            ),
+
+            settingTile(
               icon: Icons.notifications,
               title: "Notifications",
-              subtitle: "Low stock alerts enabled",
-              color: Colors.orange,
+              subtitle: "Weight Alerts Enabled",
+              color: Colors.red,
               trailing: Switch(
                 value: notifications,
                 onChanged: (value) {
@@ -110,16 +109,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
             ),
+
             settingTile(
               icon: Icons.code,
               title: "Technology",
-              subtitle: "Flutter • Dart • ESP32 • HX711 • Load Cell",
+              subtitle: "Flutter • ESP32 • HX711",
               color: Colors.teal,
             ),
 
             settingTile(
               icon: Icons.info,
-              title: "Version",
+              title: "Application Version",
               subtitle: "Stock Sense v1.0",
               color: Colors.indigo,
             ),
@@ -133,38 +133,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Padding(
-                padding: EdgeInsets.all(18),
+                padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    Icon(Icons.inventory_2, color: Colors.green, size: 55),
-                    SizedBox(height: 12),
+                    Icon(Icons.inventory_2, size: 60, color: Colors.green),
+
+                    SizedBox(height: 15),
+
                     Text(
                       "Stock Sense",
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 8),
+
+                    SizedBox(height: 10),
+
                     Text(
-                      "AI & IoT Based Smart Inventory Management System",
+                      "IoT Smart Container Monitoring System",
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(fontSize: 16),
                     ),
+
                     SizedBox(height: 15),
+
                     Divider(),
-                    SizedBox(height: 8),
+
+                    SizedBox(height: 10),
+
                     Text(
-                      "Designed for Restaurants, Hospitals, Warehouses & Retail Stores",
+                      "This prototype demonstrates real-time weight monitoring using an ESP32, HX711 amplifier, Load Cell, and a Flutter application.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
               ),
             ),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 30),
           ],
         ),
       ),
